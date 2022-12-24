@@ -15,7 +15,8 @@ import {
 import axios from "axios";
 import moment from "moment";
 
-// require("dotenv").config();
+import * as Location from "expo-location";
+
 import OutterAir from "./components/airdata";
 
 class App extends Component {
@@ -25,36 +26,72 @@ class App extends Component {
       zip: "",
       worst: "",
       badZip: false,
+      locationON: false,
+      address: {},
       data: {
         placeName: "",
         state: "",
         postalCode: "",
-        PM25: "",
-        OZONE: "",
-        CO: "",
-        NO2: "",
-        SO2: "",
+        PM25: 0,
+        OZONE: 0,
+        CO: 0,
+        NO2: 0,
+        SO2: 0,
         updatedAt: "2000-01-01 00:00:00",
-        AQI: "",
+        AQI: 0,
       },
     };
-    // this.search = this.search.bind(this);
-    // this.findWorst = this.findWorst.bind(this);
+  }
+  componentDidMount() {
+    this.CheckIfLocationEnabled();
+    this.GetCurrentLocation();
   }
 
-  findWorst() {
-    axios
-      .get("/worst&best")
-      .then((incomingData) => {
-        console.log("axios get findWorst incoming Data", incomingData.data); // [{worst}, {best}]
-        this.setState({
-          worst: incomingData.data[0],
-        });
-      })
-      .catch((err) => {
-        console.log("axios client err", err);
+  CheckIfLocationEnabled = async () => {
+    let enabled = await Location.hasServicesEnabledAsync();
+
+    if (!enabled) {
+      Alert.alert(
+        "Location Service not enabled",
+        "Please enable your location services to continue",
+        [{ text: "OK" }],
+        { cancelable: false }
+      );
+    } else {
+      console.log("ENNN", enabled);
+      this.setState({ locationON: enabled });
+    }
+  };
+
+  GetCurrentLocation = async () => {
+    let { status } = await Location.requestBackgroundPermissionsAsync();
+
+    if (status !== "granted") {
+      Alert.alert(
+        "Permission not granted",
+        "Allow the app to use location service.",
+        [{ text: "OK" }],
+        { cancelable: false }
+      );
+    }
+
+    let { coords } = await Location.getCurrentPositionAsync();
+
+    if (coords) {
+      const { latitude, longitude } = coords;
+      let response = await Location.reverseGeocodeAsync({
+        latitude,
+        longitude,
       });
-  }
+
+      for (let item of response) {
+        let address = `${item.name}, ${item.street}, ${item.postalCode}, ${item.city}`;
+        console.log("ADDSSxxxx", address);
+        this.setState(address);
+      }
+    }
+    // console.log("ADDSS", this.state.address);
+  };
 
   zipInput(zipcode) {
     console.log("typing...", zipcode, "zip", this.state.zip);
@@ -79,11 +116,6 @@ class App extends Component {
     axios
       .request(options)
       .then((incomingData) => {
-        // var dataDate = moment
-        //   .utc(incomingData.data.stations[0].updatedAt)
-        //   .toDate();
-        // var local = moment(dataDate).local().format("YYYY-MM-DD HH:mm:ss");
-        // console.log("DATE", local);
         this.setState({
           data: incomingData.data.stations[0],
         });
@@ -95,37 +127,55 @@ class App extends Component {
   }
 
   render() {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View>
-          <ImageBackground
-            source={{ uri: "https://i.gifer.com/2D2M.gif" }}
-            resizeMode="cover"
-            style={styles.image}
-          >
-            <Text style={styles.title}>Air Pollution Near me</Text>
+    if (this.state.locationON === false) {
+      return (
+        <SafeAreaView style={styles.container}>
+          <View>
+            <ImageBackground
+              source={{ uri: "https://i.gifer.com/2D2M.gif" }}
+              resizeMode="cover"
+              style={styles.image}
+            >
+              <Text style={styles.title}> Please trun on your location</Text>
+            </ImageBackground>
+          </View>
+        </SafeAreaView>
+      );
+    } else if (this.state.locationON) {
+      return (
+        <SafeAreaView style={styles.container}>
+          <View>
+            <ImageBackground
+              source={{ uri: "https://i.gifer.com/2D2M.gif" }}
+              resizeMode="cover"
+              style={styles.image}
+            >
+              <Text style={styles.title}>Air Pollution Near me</Text>
 
-            <TextInput
-              style={styles.input}
-              onChangeText={(e) => {
-                this.zipInput(e);
-              }}
-              // value={"Zip"}
-              placeholder="useless placeholder"
-              keyboardType="numeric"
-            />
-            <Button
-              title="Search"
-              onPress={() => {
-                this.search();
-              }}
-            />
+              <TextInput
+                style={styles.input}
+                onChangeText={(e) => {
+                  this.zipInput(e);
+                }}
+                // value={27707}
+                placeholder="useless placeholder"
+                keyboardType="numeric"
+              />
+              <Button
+                title="Search"
+                onPress={() => {
+                  this.search();
+                }}
+              />
 
-            <OutterAir airData={this.state.data} />
-          </ImageBackground>
-        </View>
-      </SafeAreaView>
-    );
+              <OutterAir airData={this.state.data} />
+            </ImageBackground>
+          </View>
+        </SafeAreaView>
+      );
+    } else {
+      return null;
+    }
   }
 }
 
