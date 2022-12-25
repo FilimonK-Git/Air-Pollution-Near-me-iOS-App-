@@ -26,8 +26,6 @@ class App extends Component {
       zip: "",
       worst: "",
       badZip: false,
-      locationON: false,
-      address: {},
       data: {
         placeName: "",
         state: "",
@@ -43,38 +41,11 @@ class App extends Component {
     };
   }
   componentDidMount() {
-    this.CheckIfLocationEnabled();
     this.GetCurrentLocation();
   }
 
-  CheckIfLocationEnabled = async () => {
-    let enabled = await Location.hasServicesEnabledAsync();
-
-    if (!enabled) {
-      Alert.alert(
-        "Location Service not enabled",
-        "Please enable your location services to continue",
-        [{ text: "OK" }],
-        { cancelable: false }
-      );
-    } else {
-      console.log("ENNN", enabled);
-      this.setState({ locationON: enabled });
-    }
-  };
-
   GetCurrentLocation = async () => {
     let { status } = await Location.requestBackgroundPermissionsAsync();
-
-    if (status !== "granted") {
-      Alert.alert(
-        "Permission not granted",
-        "Allow the app to use location service.",
-        [{ text: "OK" }],
-        { cancelable: false }
-      );
-    }
-
     let { coords } = await Location.getCurrentPositionAsync();
 
     if (coords) {
@@ -83,14 +54,10 @@ class App extends Component {
         latitude,
         longitude,
       });
-
-      for (let item of response) {
-        let address = `${item.name}, ${item.street}, ${item.postalCode}, ${item.city}`;
-        console.log("ADDSSxxxx", address);
-        this.setState(address);
-      }
+      console.log("ZIPPPCURR", response[0].postalCode);
     }
     // console.log("ADDSS", this.state.address);
+    this.search(response[0].postalCode);
   };
 
   zipInput(zipcode) {
@@ -127,55 +94,37 @@ class App extends Component {
   }
 
   render() {
-    if (this.state.locationON === false) {
-      return (
-        <SafeAreaView style={styles.container}>
-          <View>
-            <ImageBackground
-              source={{ uri: "https://i.gifer.com/2D2M.gif" }}
-              resizeMode="cover"
-              style={styles.image}
-            >
-              <Text style={styles.title}> Please trun on your location</Text>
-            </ImageBackground>
-          </View>
-        </SafeAreaView>
-      );
-    } else if (this.state.locationON) {
-      return (
-        <SafeAreaView style={styles.container}>
-          <View>
-            <ImageBackground
-              source={{ uri: "https://i.gifer.com/2D2M.gif" }}
-              resizeMode="cover"
-              style={styles.image}
-            >
-              <Text style={styles.title}>Air Pollution Near me</Text>
+    return (
+      <SafeAreaView style={styles.container}>
+        <View>
+          <ImageBackground
+            source={{ uri: "https://i.gifer.com/2D2M.gif" }}
+            resizeMode="cover"
+            style={styles.image}
+          >
+            <Text style={styles.title}>Air Pollution Near me</Text>
 
-              <TextInput
-                style={styles.input}
-                onChangeText={(e) => {
-                  this.zipInput(e);
-                }}
-                // value={27707}
-                placeholder="useless placeholder"
-                keyboardType="numeric"
-              />
-              <Button
-                title="Search"
-                onPress={() => {
-                  this.search();
-                }}
-              />
+            <TextInput
+              style={styles.input}
+              onChangeText={(e) => {
+                this.zipInput(e);
+              }}
+              // value={27707}
+              placeholder="useless placeholder"
+              keyboardType="numeric"
+            />
+            <Button
+              title="Search"
+              onPress={() => {
+                this.search();
+              }}
+            />
 
-              <OutterAir airData={this.state.data} />
-            </ImageBackground>
-          </View>
-        </SafeAreaView>
-      );
-    } else {
-      return null;
-    }
+            <OutterAir airData={this.state.data} />
+          </ImageBackground>
+        </View>
+      </SafeAreaView>
+    );
   }
 }
 
