@@ -27,7 +27,7 @@ class App extends Component {
       worst: "",
       badZip: false,
       data: {
-        placeName: "",
+        placeName: "Durham",
         state: "",
         postalCode: "",
         PM25: 0,
@@ -41,7 +41,7 @@ class App extends Component {
     };
   }
   componentDidMount() {
-    this.GetCurrentLocation();
+    // this.GetCurrentLocation();
   }
 
   GetCurrentLocation = async () => {
@@ -54,25 +54,21 @@ class App extends Component {
         latitude,
         longitude,
       });
-      console.log("ZIPPPCURR", response[0].postalCode);
+      this.search(response[0].postalCode);
     }
-    // console.log("ADDSS", this.state.address);
-    this.search(response[0].postalCode);
   };
 
-  zipInput(zipcode) {
-    console.log("typing...", zipcode, "zip", this.state.zip);
+  zipInput(zip) {
+    console.log("zip typing", zip);
     this.setState({
-      zip: zipcode,
+      zip,
     });
   }
 
-  search() {
-    console.log("INisde");
-
+  search(zip) {
     const options = {
       method: "GET",
-      url: `https://api.ambeedata.com/latest/by-postal-code?postalCode=${this.state.zip}&countryCode=US`,
+      url: `https://api.ambeedata.com/latest/by-postal-code?postalCode=${zip}&countryCode=US`,
       headers: {
         "x-api-key":
           "d5c13c8dcc35d7431096f129ef638117742edb05adc77dad34b5a43ab1006d7d",
@@ -95,62 +91,89 @@ class App extends Component {
 
   render() {
     return (
-      <SafeAreaView style={styles.container}>
-        <View>
-          <ImageBackground
-            source={{ uri: "https://i.gifer.com/2D2M.gif" }}
-            resizeMode="cover"
-            style={styles.image}
-          >
-            <Text style={styles.title}>Air Pollution Near me</Text>
-
-            <TextInput
-              style={styles.input}
-              onChangeText={(e) => {
-                this.zipInput(e);
-              }}
-              // value={27707}
-              placeholder="useless placeholder"
-              keyboardType="numeric"
-            />
-            <Button
-              title="Search"
-              onPress={() => {
-                this.search();
-              }}
-            />
+      // <SafeAreaView style={styles.container}>
+      <View>
+        <ImageBackground
+          source={{ uri: "https://i.gifer.com/2D2M.gif" }}
+          resizeMode="cover"
+          style={styles.image}
+        >
+          <View tyle={styles.container}>
+            <Text style={styles.title}>
+              {this.state.data.placeName}
+              {/* , {this.state.data.state} */}
+            </Text>
+            <Text style={styles.aqiInfo}>AQI: {this.state.data.AQI}</Text>
 
             <OutterAir airData={this.state.data} />
-          </ImageBackground>
-        </View>
-      </SafeAreaView>
+
+            <View style={styles.searchPlace}>
+              <TextInput
+                style={styles.zipInput}
+                onChangeText={(e) => {
+                  this.zipInput(e);
+                }}
+                // inputStyle={{ color: "red" }}
+                placeholder="Search by Zipcode"
+                placeholderTextColor="#000"
+                keyboardType="numeric"
+                // color="black"
+              />
+              <Button
+                style={styles.searchBTN}
+                title="Search"
+                onPress={() => {
+                  this.search(this.state.zip);
+                }}
+              />
+            </View>
+          </View>
+        </ImageBackground>
+      </View>
+      // </SafeAreaView>
     );
   }
 }
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: "-10%",
+    // height: "50%",
     // flex: 1,
     // backgroundColor: "#fff",
-    alignItems: "left",
-    // justifyContent: "center",
+    alignItems: "center",
+    justifyContent: "center",
   },
   title: {
     fontSize: "30%",
-    marginLeft: "15%",
+    marginTop: "30%",
+    marginLeft: "35%",
+  },
+  aqiInfo: {
+    fontSize: "20%",
+    marginTop: "5%",
+    marginBottom: "5%",
+    marginLeft: "40%",
   },
   image: {
-    flex: 1,
-    justifyContent: "center",
+    // flex: 1,
+    // justifyContent: "center",
     width: "100%",
     height: "100%",
   },
-  input: {
-    height: 40,
+  zipInput: {
+    flex: 1,
+    height: 10,
     margin: 12,
     borderWidth: 1,
     padding: 10,
+    color: "white",
+  },
+  searchPlace: {
+    flex: 1,
+    flexDirection: "row",
+  },
+  searchBTN: {
+    flex: 1,
   },
 });
 
